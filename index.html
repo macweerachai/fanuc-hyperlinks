@@ -3,133 +3,576 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FANUC ONE Links </title>
+    <title>FTH Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
+        /* --- ตั้งค่าพื้นฐาน --- */
         :root {
-            --primary-color: #a80202; /* สีแดงหลัก */
-            --background-color: #f4f7f6; /* สีพื้นหลังอ่อน */ 
-            --text-color: #333;
-            --link-bg-color: #ffffff;
-            --link-hover-bg: #e9ecef;
-        } 
+            --sidebar-width: 240px; 
+            --sidebar-collapsed-width: 15px;
+            --sidebar-bg: #1e293b;
+            --main-bg: #f8fafc;
+            --accent-color: #3b82f6;
+            --text-color: #334155;
+        }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--background-color);
-            color: var(--text-color);
+            font-family: 'Sarabun', sans-serif;
             margin: 0;
-            padding: 20px;
             display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            min-height: 100vh;
+            height: 100vh;
+            background-color: var(--main-bg);
+            overflow: hidden;
         }
 
-        .container {
-            width: 100%;
-            max-width: 500px;
-            margin-top: 50px;
-            padding: 0 10px;
+        /* --- Sidebar --- */
+        aside {
+            position: fixed;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 30px; 
+            background-color: var(--sidebar-bg);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            padding: 20px 0;
+            box-shadow: 4px 0 15px rgba(0,0,0,0.1);
+            z-index: 999;
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+            overflow: hidden;
+            white-space: nowrap;
+            cursor: pointer; 
         }
 
-        .profile {
-            text-align: left;
-            margin-bottom: 30px;
+        aside:hover, aside.active {
+            width: var(--sidebar-width);
+            padding: 20px 15px;
         }
 
-        .profile h1 {
-            color: var(--primary-color);
-            margin-bottom: 5px;
+        aside::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 4px;
+            height: 100%;
+            background: rgba(255,255,255,0.1);
         }
+        
+        aside:hover::after, aside.active::after { display: none; }
 
-        .link-button {
-            display: block;
-            width: 100%;
-            padding: 15px 20px;
-            margin: 15px 0;
-            background-color: var(--link-bg-color);
-            color: var(--primary-color);
-            text-decoration: none;
-            border: 2px solid var(--primary-color);
-            border-radius: 10px;
-            font-size: 17px;
+        aside h2 {
+            font-size: 1.2rem;
+            margin: 0 0 20px 0;
+            text-align: center;
             font-weight: 600;
-            transition: background-color 0.3s, transform 0.2s;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-            text-align: left;
+            color: #fff;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            opacity: 0;
+            transition: opacity 0.2s;
+            pointer-events: none;
         }
 
-        .link-button:hover {
-            background-color: var(--link-hover-bg);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+        aside:hover h2, aside.active h2 { opacity: 1; }
+
+        .menu-item {
+            text-decoration: none;
+            color: #94a3b8;
+            padding: 10px 12px;
+            margin-bottom: 5px;
+            border-radius: 6px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            font-size: 0.95rem;
+            opacity: 0;
         }
+
+        aside:hover .menu-item, aside.active .menu-item { opacity: 1; }
+
+        .menu-item:hover {
+            background-color: rgba(255,255,255,0.1);
+            color: white;
+            padding-left: 15px;
+        }
+
+        .menu-icon { margin-right: 10px; }
+
+        /* --- Main Content --- */
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            margin-left: var(--sidebar-collapsed-width);
+            transition: margin-left 0.3s;
+            width: calc(100% - var(--sidebar-collapsed-width));
+        }
+
+        .top-bar {
+            background: white;
+            padding: 8px 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 1000;
+            position: sticky;
+            top: 0;
+            gap: 8px;
+        }
+
+        .search-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+            width: 100%;
+        }
+
+        .search-wrapper {
+            position: relative;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 8px 12px 8px 35px;
+            border-radius: 20px;
+            border: 1px solid #e2e8f0;
+            background-color: #f1f5f9;
+            font-size: 16px;
+            outline: none;
+            box-sizing: border-box;
+        }
+
+        .btn-home {
+            padding: 8px 12px;
+            border-radius: 15px;
+            border: 1px solid #e2e8f0;
+            background: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-family: 'Sarabun';
+            font-weight: 600;
+            color: var(--text-color);
+            white-space: nowrap;
+            flex-shrink: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+            font-size: 1rem;
+        }
+
+        .content-area {
+            flex: 1;
+            padding: 20px 30px;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+        }
+
+        .section-wrapper { margin-bottom: 30px; }
+
+        .section-title {
+            font-size: 1.1rem;
+            color: var(--text-color);
+            margin-bottom: 15px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 5px;
+        }
+
+        .grid-links {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); 
+            gap: 12px;
+        }
+
+        .link-box {
+            background: white;
+            padding: 15px 5px;
+            border-radius: 10px;
+            text-decoration: none;
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+            border: 1px solid #e2e8f0;
+            transition: all 0.15s;
+            cursor: pointer;
+            position: relative;
+            min-height: 90px;
+        }
+
+        .link-box:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+            z-index: 50;
+        }
+
+        .emoji-icon {
+            font-size: 2rem;
+            margin-bottom: 8px;
+        }
+
+        .link-name {
+            font-weight: 500;
+            font-size: 0.85rem;
+            text-align: center;
+            line-height: 1.2;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            width: 100%;
+            padding: 0 5px;
+        }
+
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            top: 95%; 
+            left: 0;
+            width: 180px; 
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            overflow: visible; 
+            z-index: 101;
+        }
+
+        .link-box:hover .dropdown-menu,
+        .link-box.active .dropdown-menu {
+            display: block;
+        }
+
+        .link-box.active {
+            border-color: var(--accent-color);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+
+        .sub-link {
+            display: block;
+            padding: 8px 12px;
+            text-align: left;
+            text-decoration: none;
+            color: #334155;
+            font-size: 0.85rem;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .sub-link:hover { background-color: #eff6ff; color: var(--accent-color); }
+        .sub-link:last-child { border-bottom: none; }
+
+        /* --- Do!Book --- */
+        .hover-wrapper { position: relative; }
+        .copy-box {
+            display: none;
+            position: absolute;
+            left: 100%;
+            top: -50px;
+            width: 250px;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 5px 5px 20px rgba(0,0,0,0.2);
+            z-index: 9999;
+            font-size: 0.9rem;
+            color: #334155;
+            text-align: left;
+        }
+        .copy-box::before {
+            content: "";
+            position: absolute;
+            top: 60px;
+            right: 100%; 
+            border-width: 8px;
+            border-style: solid;
+            border-color: transparent #ffffff transparent transparent;
+        }
+        .hover-wrapper:hover .copy-box { display: block; }
+
+        footer {
+            text-align: center;
+            color: #cbd5e1;
+            font-size: 0.75rem;
+            margin-top: 30px;
+            padding-bottom: 20px;
+        }
+        mark { background: yellow; color: black; border-radius: 2px; }
     </style>
 </head>
 <body>
-    <div class="container">
-		
-        <div class="profile">
-            <h1>「 ✦  FANUC ONE Links  ✦ 」</h1>
-            <p>(Click Link Below)</p>
+
+<aside id="mainSidebar">
+    <h2>🚀 FANUC</h2>
+    <a href="#FHQ" class="menu-item"><span class="menu-icon">🏢</span>FHQ Link</a> 
+    <a href="#FTH" class="menu-item"><span class="menu-icon">🏠</span>FTH Link</a> 
+    <a href="#SAPBYD" class="menu-item"><span class="menu-icon">💻</span>SAPBYD</a>
+    <hr style="border: 0.5px solid rgba(255,255,255,0.1); width: 80%;" />
+</aside>
+
+<main>
+    <div class="top-bar">
+        <div class="search-container">
+            <div class="search-wrapper">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="searchInput" class="search-input" placeholder="Search everything..." />
+            </div>
+            <button onclick="clearSearch()" class="btn-home">
+                🏠 <span>Home</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="content-area">
+        <div id="FHQ" class="section-wrapper">
+            <div class="section-title">FHQ Links</div>
+            <div class="grid-links">
+                <div class="link-box">
+                    <span class="emoji-icon">🟡</span> <span class="link-name">Newsletter ▼</span>
+                    <div class="dropdown-menu">
+                        <a href="http://10.33.16.238/fth/Newsletter/Vol4.pdf" target="_blank" class="sub-link">Vol.4 Storage Media</a>
+                        <a href="http://10.33.16.238/fth/Newsletter/Vol3.pdf" target="_blank" class="sub-link">Vol.3 Password</a>
+                        <a href="http://10.33.16.238/fth/Newsletter/Vol2.pdf" target="_blank" class="sub-link">Vol.2 AI</a>
+                        <a href="http://10.33.16.238/fth/Newsletter/Vol1.pdf" target="_blank" class="sub-link">Vol.1 Social Eng</a>
+                    </div>
+                </div>
+
+                <div class="link-box">
+                    <span class="emoji-icon">🟡</span> <span class="link-name">Service Sys.▼</span>
+                    <div class="dropdown-menu">
+                        <a href="https://ftdb.one.fanuc.com/sites/techdocs/common" target="_blank" class="sub-link">TechDocs</a>
+                        <a href="http://srsearch.one.fanuc.com/" target="_blank" class="sub-link">SR Search</a>
+                        <div class="hover-wrapper">
+                            <a href="http://do.all.fanuc.co.jp/fanuc/html5/login.html?" target="_blank" class="sub-link">Do!Book ℹ️</a>
+                            <div class="copy-box">
+                                <div style="font-weight: bold; color: #3b82f6;">Device Authorization:</div>
+                                ID: <b>APAC</b> | Pass: <b>MvMAKq85</b>
+                            </div>
+                        </div>
+                        <a href="https://alarmsearch.one.fanuc.com/Search.aspx" target="_blank" class="sub-link">Alarm & Parameter</a>
+                        <a href="http://dparts.one.fanuc.com/" target="_blank" class="sub-link">Digital Parts Manual</a>
+                        <a href="http://fhq00007e35.all.fanuc.co.jp/redmine/login" target="_blank" class="sub-link">IoT RedMine</a>
+                        <a href="https://www3.business.fanuc.co.jp/CNC/option/Overseas/socm01p01/" target="_blank" class="sub-link">Option</a>
+                        <a href="http://143.201.202.5/IFSS/ifcm01p01" target="_blank" class="sub-link">GSIS (Office)</a>
+                        <a href="http://gsis.one.fanuc.com/IFSS/ifcm01p01/" target="_blank" class="sub-link">GSIS (Outside)</a>
+                        <a href="https://bomgenerator.one.fanuc.com/bomgenerator/" target="_blank" class="sub-link">BOM GENERATOR</a>
+                    </div>
+                </div>
+
+                <div class="link-box">
+                    <span class="emoji-icon">🟡</span> <span class="link-name">Sharepoint ▼</span>
+                    <div class="dropdown-menu">
+                        <a href="https://fanuc.sharepoint.com/" target="_blank" class="sub-link">Main</a>
+                        <a href="https://fanuc-my.sharepoint.com/" target="_blank" class="sub-link">Own One-Drive</a>
+                        <a href="https://fanuc.sharepoint.com/sites/FHQ-G-GlobalService/FSC/SitePages/Home.aspx" target="_blank" class="sub-link">FSC</a>
+                        <a href="https://fanuc.sharepoint.com/sites/FHQ-G-GlobalService/SitePages/Home.aspx" target="_blank" class="sub-link">Global Service Site</a>
+                        <a href="https://fanuc.sharepoint.com/sites/FHQ-G-2020L0003/IA/IA_FTH2025/Shared%20Documents" target="_blank" class="sub-link">Internal Audit</a>
+                        <a href="https://fanuc.sharepoint.com/sites/FHQ-G-2020L0003/Survey/FANUC_Thailand_Employee_Survey_2025" target="_blank" class="sub-link">Employee Survey 2025</a>
+                        <a href="https://fanuc.sharepoint.com/sites/FHQ-G-2025B0002" target="_blank" class="sub-link">Information Security</a>
+                        <a href="https://fanuc.sharepoint.com/sites/FHQ-G-2025F0001" target="_blank" class="sub-link">South East Asia</a>
+                        <a href="https://fanuc.sharepoint.com/sites/FHQ-G-2025C0002/SitePages/Regulations-in-each.aspx" target="_blank" class="sub-link">Regulations in FTH</a>
+                        <a href="https://fanuc.sharepoint.com/:p:/r/teams/GCC2025_IT_Agenda_Proj_GLB/" target="_blank" class="sub-link">GCC IT Agenda</a>
+                    </div>
+                </div>
+
+                <a href="https://fanuc-jp-console.lrn.com/" target="_blank" class="link-box"><span class="emoji-icon">🟡</span><span class="link-name">LRN Compliance</span></a>
+                <a href="https://fanuc.ws03-securityeducation.com/login" target="_blank" class="link-box"><span class="emoji-icon">🟡</span><span class="link-name">📖 eLearning</span></a>
+                <a href="http://10.36.1.12/prism/commond/default.aspx" target="_blank" class="link-box"><span class="emoji-icon">🟡</span><span class="link-name">PRISM</span></a>
+                <a href="http://10.36.1.12/PRBSSolution/prcm01p01/" target="_blank" class="link-box"><span class="emoji-icon">🟡</span><span class="link-name">Barcode System</span></a>
+                <a href="https://fanuc-inventory.syncroncloud.com/views/security/login/login.xhtml" target="_blank" class="link-box"><span class="emoji-icon">🟡</span><span class="link-name">Syncron</span></a>
+            </div>
         </div>
 
-			<a href="http://10.33.16.111/fth/Newsletter/Vol3.pdf"  class="link-button" target="_blank">			FANUC ╰┈➤ Security Newsletter Vol.3 Password Management</a>
-			<a href="http://10.33.16.111/fth/Newsletter/Vol2.pdf" class="link-button" target="_blank">			FANUC ╰┈➤ Security Newsletter Vol.2 Generative AI</a>		
-			<a href="http://10.33.16.111/fth/Newsletter/Vol1.pdf" class="link-button"  target="_blank">			FANUC ╰┈➤ Security Newsletter Vol.1 Social Engineering</a>
-	        <a href="https://fanuc-jp-console.lrn.com" class="link-button" target="_blank">						FANUC ╰┈➤ LRN Compliance Learning</a> 
-			<a href="https://fanuc.ws03-securityeducation.com/login" class="link-button" target="_blank">		FANUC ╰┈➤ eLearning</a> 
-			<a href="https://fanuc.sharepoint.com/" class="link-button" target="_blank">						FANUC ╰┈➤ FANUC SharedPoint</a>			
-			<a href="https://ftdb.one.fanuc.com/sites/techdocs/common" class="link-button"  target="_blank">	FANUC ╰┈➤ TechDocs</a>
-			<a href="http://srsearch.one.fanuc.com/" class="link-button" target="_blank">						FANUC ╰┈➤ SR Search System</a>
-			<a href="http://do.all.fanuc.co.jp/fanuc/html5/login.html?" class="link-button" target="_blank">	FANUC ╰┈➤ Do!Book (Link from SR, APAC, MvMAKq85)</a>
-			<a href="https://alarmsearch.one.fanuc.com/Search.aspx" class="link-button" target="_blank">		FANUC ╰┈➤ Alarm & Parameter System</a>	
-			<a href="http://dparts.one.fanuc.com/" class="link-button" target="_blank">							FANUC ╰┈➤ Digital Parts Manual</a>
-			<a href="http://fhq00007e35.all.fanuc.co.jp/redmine/login" class="link-button"  target="_blank">	FANUC ╰┈➤ IoT RedMine</a> 
-			<a href="http://10.36.1.12/prism/commond/default.aspx" class="link-button" target="_blank">			FANUC ╰┈➤ PRISM</a>
-			<a href="http://10.36.1.12/PRBSSolution/prcm01p01/" class="link-button" target="_blank">			FANUC ╰┈➤ Barcode System</a>
-			<a href="http://143.201.202.5/IFSS/ifcm01p01" class="link-button" target="_blank">					FANUC ╰┈➤ GSIS (From Office) </a>
-			<a href="http://gsis.one.fanuc.com/IFSS/ifcm01p01/" class="link-button" target="_blank">			FANUC ╰┈➤ GSIS (With VPN from Outside)</a>
-			<a href="https://bomgenerator.one.fanuc.com/bomgenerator/" class="link-button" target="_blank">		FANUC ╰┈➤ BOMGENERATOR (NEW)</a>
-			<a href="https://drive.google.com/file/d/1WyDt3El1fmOX-LxuAfY_cNVajLi3OdCT/view" class="link-button" target="_blank">				FANUC ╰┈➤ VPN Software</a>
-			<a href="https://mysignins.microsoft.com/security-info"class="link-button"  target="_blank">		FANUC ╰┈➤ Register MFA from MS365(Use from Outside)</a>
-			<a href="https://fanuc.sharepoint.com/sites/FHQ-G-2025B0001" class="link-button" target="_blank">	FANUC ╰┈➤ FSC2025</a>
-			<a href="https://fanuc.sharepoint.com/sites/FHQ-G-2020L0003/IA/IA_FTH2025/" class="link-button" target="_blank">	FANUC ╰┈➤ Internal Audit</a> 
-			<a href="https://fanuc.sharepoint.com/sites/FHQ-G-2020L0003/Survey/FANUC_Thailand_Employee_Survey_2025" class="link-button" target="_blank"> FANUC ╰┈➤ FTH Employee Survey 2025 </a> 	
-			<a href="https://fanuc.sharepoint.com/sites/FHQ-G-2025B0002" class="link-button" target="_blank">	FANUC ╰┈➤ Portal Site for Information Security Education </a> 
-			<a href="https://fanuc.sharepoint.com/sites/FHQ-G-2025F0001" class="link-button" target="_blank">	FANUC ╰┈➤ South East Asia </a> 		
-			<a href="https://fanuc-my.sharepoint.com/" class="link-button" target="_blank">						FANUC ╰┈➤ Own One-Drive </a> 
-			<a href="https://fanuc.sharepoint.com/sites/FHQ-G-2025C0002/SitePages/Regulations-in-each.aspx/" class="link-button" target="_blank"> FANUC ╰┈➤ Regulations in FTH  </a> 
-			<a href="https://fanuc.sharepoint.com/teams/GCC2025_IT_Agenda_Proj_GLB/" class="link-button" target="_blank"> FANUC ╰┈➤ GCC2025 IT Agenda  </a> 
-			<a href="http://10.33.16.238/gbdw/" class="link-button" target="_blank"> FANUC ╰┈➤ GBDW  </a> 
+        <div id="FTH" class="section-wrapper">
+            <div class="section-title">FTH Links</div>
+            <div class="grid-links">
+                <a href="http://10.33.16.238/gbdw/" target="_blank" class="link-box"><span class="emoji-icon">🔥</span><span class="link-name">GBDW</span></a>
+                <a href="https://www.fanuc.com/fth/th/index.html" target="_blank" class="link-box"><span class="emoji-icon">🏠</span><span class="link-name">FTH Website</span></a>
+                <a href="http://10.33.16.111/fth/albums.php" target="_blank" class="link-box"><span class="emoji-icon">📸</span><span class="link-name">Photo</span></a>
+                <a href="http://10.33.16.111/tool/" target="_blank" class="link-box"><span class="emoji-icon">🧰</span><span class="link-name">Tool</span></a>
+                <a href="PC_Software_Delivery.html" target="_blank" class="link-box"><span class="emoji-icon">💽</span><span class="link-name">Software Delivery</span></a>
+                <a href="http://accountserver:8080/fanuc/authentication/" target="_blank" class="link-box"><span class="emoji-icon">📊</span><span class="link-name">Billing System</span></a>
+                <a href="http://10.33.16.238/fth/robot_dem.html" target="_blank" class="link-box"><span class="emoji-icon">🤖</span><span class="link-name">Robot System</span></a>
 
-			<br>
+                <div class="link-box">
+					<img src="images/Jobcan.png" alt="Jobcan Icon" style="width: 40px; height: 40px; margin-right: 8px; vertical-align: middle;">
+					<span class="link-name">Jobcan ▼</span>
+                    <div class="dropdown-menu">
+                        <a href="https://ssl.jobcan.jp/login/pc-employee-global?lang_code=en" target="_blank" class="sub-link">For Staff</a>
+                        <a href="https://ssl.jobcan.jp/login/client?lang_code=en" target="_blank" class="sub-link">For Manager</a>
+                        <a href="http://ra05.jobcan.in.th/login/index.php" target="_blank" class="sub-link">For Admin</a>
+                    </div>
+                </div>
 
-			<a href="https://my423061-sso.businessbydesign.cloud.sap/" class="link-button" target="_blank">				⌞SAPbyD ⌝ FTH PRD Server</a>
-			<a href="https://my425419-sso.businessbydesign.cloud.sap/" class="link-button" target="_blank">				⌞SAPbyD ⌝ Test (Roll Out)</a>
-			<a href="https://my431413-sso.businessbydesign.cloud.sap/" class="link-button" target="_blank">				⌞SAPbyD ⌝ Test (Agile)</a>
-			<a href="https://oneayle.sharepoint.com/sites/Ext_OneAyle_FANUC" class="link-button" target="_blank">		⌞SAPbyD ⌝ SharedPoint OA-FANUC (IT)</a>
-			<a href="https://fanuc.sharepoint.com/sites/FHQ-G-2022L0001/sap_common/SitePages/Community%20Home.aspx" class="link-button" target="_blank">⌞SAPbyD ⌝ For common 8 companies</a>
-			<a href="http://10.33.16.111/fth/material/Multi-Factor_Authen_M365.pdf" class="link-button" target="_blank">⌞SAPbyD ⌝ Manual How to connect SAP from outside</a>
-			<a href="https://cct.sde.cloud.sap/analytics" class="link-button" target="_blank">		⌞SAPbyD ⌝ Cloud Check Tool (IT)</a>
-    		<br>
+                <div class="link-box">
+                    <span class="emoji-icon">👩🏼‍🦰</span> <span class="link-name">Admin ▼</span>
+                    <div class="dropdown-menu">
+                        <a href="http://10.33.16.120/" target="_blank" class="sub-link">CCTV 1</a>
+                        <a href="http://10.33.16.121/" target="_blank" class="sub-link">CCTV 2</a>
+                    </div>
+                </div>
 
-			<a href="http://10.33.16.111/fth/Working Calendar/FHQ Working Calendar 2025.pdf" class="link-button" target="_blank">	(﹙˓ ‍FHQ ˒﹚) Working Calendar 2025</a>
-			<a href="http://10.33.16.111/fth/Working Calendar/FTH Working Calendar 2026.pdf" class="link-button" target="_blank">	(﹙˓ ‍FTH ˒﹚) Working Calendar 2026</a>
-			<a href="http://10.33.16.111/fth/Working Calendar/FTH Working Calendar 2025.pdf" class="link-button" target="_blank">	(﹙˓ ‍FTH ˒﹚) Working Calendar 2025</a>
-			<a href="https://www.fanuc.com/fth/th/index.html" class="link-button" target="_blank">									(﹙˓ ‍FTH ˒﹚) Website</a>
-			<a href="https://ssl.jobcan.jp/login/pc-employee-global?lang_code=en" class="link-button" target="_blank">				(﹙˓ ‍FTH ˒﹚) JobCan Login for Staff</a>
-			<a href="https://ssl.jobcan.jp/login/client?lang_code=en"class="link-button"  target="_blank">							(﹙˓ ‍FTH ˒﹚) JobCan Login for Manager</a>
-			<a href="http://ra05.jobcan.in.th/login/index.php" class="link-button" target="_blank">									(﹙˓ ‍FTH-Admin ˒﹚) JobCan Admin Login</a>
-			<a href="http://10.33.16.111/sitesearch/index.php" class="link-button" target="_blank">									(﹙˓ ‍FTH-Parts Sales ˒﹚) Remember Password System</a> 
-			<a href="http://accountserver:8080/fanuc/authentication/" class="link-button" target="_blank">							(﹙˓ ‍FTH-Account ˒﹚) Accounting New Billing System</a>
-			<a href="http://accserver/fanuc/authentication/" class="link-button" target="_blank">									(﹙˓ ‍FTH-Account ˒﹚) Accounting Old Billing System</a>
-			<a href="http://10.33.16.111/tool/index.php" class="link-button" target="_blank">										(﹙˓ ‍FTH-IT ˒﹚) Tool System</a>
-			<a href="http://10.33.16.111/fth/system/bitlocker/index_new.php" class="link-button" target="_blank">					(﹙˓ ‍FTH-IT ˒﹚) Check PCs</a>
-			<a href="https://corp4.ais-idc.com/cacti/index.php" class="link-button" target="_blank">								(﹙˓ ‍FTH-IT ˒﹚) Bandwidth Monitor</a>
-			<a href="https://ebusinessportal.ais.co.th/" class="link-button" target="_blank">										(﹙˓ ‍FTH-IT ˒﹚) eBusiness Portal</a>
-			<a href="http://10.33.16.111/fth/albums.php" class="link-button" target="_blank">										(﹙˓ ‍FTH-IT ˒﹚) Photo Album</a>
-			<a href="http://10.33.16.111/sitesearch" class="link-button" target="_blank">											(﹙˓ ‍FTH-IT ˒﹚) Site Search</a>
-	</div>
+                <div class="link-box">
+                    <span class="emoji-icon">👨‍💻</span> <span class="link-name">IT ▼</span>
+                    <div class="dropdown-menu">
+                        <a href="https://corp4.ais-idc.com/cacti/index.php" target="_blank" class="sub-link">Bandwidth Monitor</a>
+                        <a href="http://10.33.16.111/sitesearch" target="_blank" class="sub-link">Sitesearch</a>
+                        <a href="http://10.33.16.200" target="_blank" class="sub-link">AP Controller</a>
+                        <a href="https://mailawn.thaicloudsolutions.com/login/" target="_blank" class="sub-link">Email Admin</a>
+                        <a href="http://10.33.16.238/IT/" target="_blank" class="sub-link">IT</a>
+                        <a href="https://fanucthai.webex.com/" target="_blank" class="sub-link">WEBEX</a>
+                    </div>
+                </div>
+
+                <div class="link-box">
+                    <span class="emoji-icon">📧</span> <span class="link-name">Email ▼</span>
+                    <div class="dropdown-menu">
+                        <a href="https://outlook.office365.com/mail/?realm=fth.fanuc.com" target="_blank" class="sub-link">Webmail (.com)</a>
+                        <a href="https://mailawn.thaicloudsolutions.com/webmail/" target="_blank" class="sub-link">Webmail (.co.th)</a>
+                        <a href="https://antispamawn.thaicloudsolutions.com/login.php" target="_blank" class="sub-link">SPAM Quarantine</a>
+                        <a href="http://10.33.16.111/fth/material/Email_Outlook.pdf" target="_blank" class="sub-link">Manual: Outlook</a>
+                        <a href="http://10.33.16.111/fth/material/Email_iOS_EN.pdf" target="_blank" class="sub-link">Manual: iOS</a>
+                        <a href="http://10.33.16.111/fth/material/Email_Android.pdf" target="_blank" class="sub-link">Manual: Android</a>
+                    </div>
+                </div>
+
+                <div class="link-box">
+                    <span class="emoji-icon">📆</span> <span class="link-name">Calendar ▼</span>
+                    <div class="dropdown-menu">
+                        <a href="FTH Working Calendar 2026.pdf" target="_blank" class="sub-link">FTH Calendar 2026</a>
+                        <a href="http://10.33.16.111/fth/Working Calendar/FHQ Working Calendar 2025.pdf" target="_blank" class="sub-link">FHQ Calendar 2025</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="SAPBYD" class="section-wrapper">
+            <div class="section-title">💻 SAPBYD</div>
+            <div class="grid-links">
+                <a href="https://my423061-sso.businessbydesign.cloud.sap/" target="_blank" class="link-box"><span class="emoji-icon">🔵</span><span class="link-name">Product Tenant</span></a>
+                <a href="https://my425419-sso.businessbydesign.cloud.sap/" target="_blank" class="link-box"><span class="emoji-icon">🔵</span><span class="link-name">Test (ROLL OUT)</span></a>
+                <a href="https://my431413-sso.businessbydesign.cloud.sap/" target="_blank" class="link-box"><span class="emoji-icon">🔵</span><span class="link-name">Test (AGILE)</span></a>
+                <a href="https://oneayle.sharepoint.com/sites/Ext_OneAyle_FANUC" target="_blank" class="link-box"><span class="emoji-icon">🔵</span><span class="link-name">OA-FANUC</span></a>
+                <a href="https://fanuc.sharepoint.com/sites/FHQ-G-2022L0001/sap_common/SitePages/Community%20Home.aspx" target="_blank" class="link-box"><span class="emoji-icon">🔵</span><span class="link-name">Common 8 Cos.</span></a>
+                <a href="http://10.33.16.111/fth/material/Multi-Factor_Authen_M365.pdf" target="_blank" class="link-box"><span class="emoji-icon">🔵</span><span class="link-name">Manual Setup MS365</span></a>
+                <a href="https://cct.sde.cloud.sap/analytics" target="_blank" class="link-box"><span class="emoji-icon">🔵</span><span class="link-name">Cloud Check Tool</span></a>
+                <a href="https://mysignins.microsoft.com/security-info" target="_blank" class="link-box"><span class="emoji-icon">🔵</span><span class="link-name">🔑MFA Auth</span></a>
+            </div>
+        </div>
+        
+        <footer>Compact Dashboard v1.2 | Data Restored</footer>
+    </div>
+</main>
+
+<script>
+    // --- ฟังก์ชันเคลียร์ค่า ---
+    function clearSearch() {
+        const input = document.getElementById('searchInput');
+        input.value = "";
+        const event = new Event('keyup');
+        input.dispatchEvent(event);
+        document.querySelector('.content-area').scrollTop = 0;
+    }
+
+    // --- ระบบค้นหาครอบคลุมทุกส่วน (ชื่อหมวดหมู่, ลิงก์หลัก, ลิงก์ย่อย) ---
+    const searchInput = document.getElementById('searchInput');
+    searchInput.addEventListener('keyup', function() {
+        const filter = searchInput.value.toLowerCase().trim();
+        const sections = document.querySelectorAll('.section-wrapper');
+
+        sections.forEach(section => {
+            const sectionTitle = section.querySelector('.section-title');
+            const sectionTitleText = sectionTitle ? sectionTitle.textContent.toLowerCase() : "";
+            
+            // กรณีชื่อหมวดหมู่ตรงกับคำค้นหา
+            const isSectionMatch = filter !== "" && sectionTitleText.includes(filter);
+            
+            let hasVisibleLinks = false;
+            const links = section.querySelectorAll('.link-box');
+
+            links.forEach(link => {
+                const mainNameElement = link.querySelector('.link-name');
+                const subLinks = link.querySelectorAll('.sub-link');
+                
+                if (!link.dataset.originalText) link.dataset.originalText = mainNameElement.textContent;
+                
+                let isLinkMatch = false;
+                const mainText = link.dataset.originalText.toLowerCase();
+
+                // 1. ค้นหาใน Sub-links (Dropdown)
+                subLinks.forEach(sub => {
+                    if (!sub.dataset.originalText) sub.dataset.originalText = sub.textContent;
+                    const subText = sub.dataset.originalText.toLowerCase();
+                    
+                    if (filter !== "" && subText.includes(filter)) {
+                        isLinkMatch = true;
+                        const regex = new RegExp(`(${filter})`, 'gi');
+                        sub.innerHTML = sub.dataset.originalText.replace(regex, '<mark>$1</mark>');
+                    } else {
+                        sub.innerHTML = sub.dataset.originalText;
+                    }
+                });
+
+                // 2. ค้นหาใน Link หลัก
+                if (filter !== "" && mainText.includes(filter)) {
+                    isLinkMatch = true;
+                    const regex = new RegExp(`(${filter})`, 'gi');
+                    mainNameElement.innerHTML = link.dataset.originalText.replace(regex, '<mark>$1</mark>');
+                } else {
+                    mainNameElement.innerHTML = link.dataset.originalText;
+                }
+
+                // การแสดงผล Link Box
+                if (filter === "") {
+                    link.style.display = "flex";
+                    link.classList.remove('active'); 
+                    hasVisibleLinks = true;
+                } else if (isLinkMatch || isSectionMatch) {
+                    link.style.display = "flex";
+                    if (isLinkMatch && subLinks.length > 0) link.classList.add('active');
+                    else link.classList.remove('active');
+                    hasVisibleLinks = true;
+                } else {
+                    link.style.display = "none";
+                    link.classList.remove('active');
+                }
+            });
+
+            // การแสดงผล Section
+            if (filter === "") section.style.display = "block";
+            else section.style.display = hasVisibleLinks ? "block" : "none";
+        });
+    });
+
+    // --- Sidebar Logic ---
+    const sidebar = document.getElementById('mainSidebar');
+    sidebar.addEventListener('click', function(e) {
+        if (e.target.classList.contains('menu-item') || e.target.closest('.menu-item')) return;
+        this.classList.toggle('active');
+    });
+
+    document.querySelector('main').addEventListener('click', function() {
+        sidebar.classList.remove('active');
+    });
+</script>
 </body>
 </html>
